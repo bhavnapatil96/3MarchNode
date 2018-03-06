@@ -45,6 +45,13 @@ app.post('/state/add',(req,res)=>{
      })
 
 })
+app.get('/state/list',(req,res)=>{
+    state.find().then((data)=>{
+        res.send(data)
+    }).catch((e)=>{
+        res.send(e)
+    })
+})
 app.post('/city/add',(req,res)=>{
     newCity=new city({
         cityname:req.body.cityname,
@@ -59,6 +66,13 @@ app.post('/city/add',(req,res)=>{
         res.send(e);
     })
 
+})
+app.get('/city/list',(req,res)=>{
+    city.find().then((data)=>{
+        res.send(data)
+    }).catch((e)=>{
+        res.send(e)
+    })
 })
 
 app.post('/user/add',(req,res)=>{
@@ -88,18 +102,18 @@ app.post('/user/add',(req,res)=>{
 app.post('/project/add',(req,res)=>{
 
     console.log(req.body)
-    console.log(req.files)
+    //console.log(req.files)
     var sampleFile=req.files.pic
     sampleFile.mv(__dirname+'/upload/'+sampleFile.name)
 
     let start =new Date(req.body.startDate);
     let end =new Date(req.body.endDate);
-
+   // console.log('Date',end);
 
  var newProject=new project({
         name:req.body.name,
-        startDate:start,
-        endDate:end,
+        startDate:req.body.startDate,
+        endDate:req.body.endDate,
         pic:sampleFile.name,
         client:req.body.client,
     });
@@ -167,10 +181,10 @@ passport.deserializeUser((user,done)=>{
 })
 
 app.get('/success',(req,res)=>{
-    res.send('sucess');
+    res.header('x-auth',token).send('success');
 })
 app.get('/err',(req,res)=>{
-    res.send({msg:err});
+    res.send('Invalid Username or Password');
 })
 
 passport.use(new LocalStrategy((username,password,done)=>{
@@ -179,9 +193,9 @@ passport.use(new LocalStrategy((username,password,done)=>{
     user.findOne({email:username},(err,user1)=>{
         if(err)
         {
-            console.log('Not Found')
+            console.log('error ',err)
         }
-        else{
+        if(user1){
             console.log(user1)
             bcrypt.compare(password,user1.password,(err,res)=>{
                 if(res){
@@ -194,6 +208,10 @@ passport.use(new LocalStrategy((username,password,done)=>{
                     return done(null,false);
                 }
             })
+        }
+        else{
+            return done(null,false)
+            console.log("Not Found")
         }
     }).catch((e)=>{
         res.send(e);
